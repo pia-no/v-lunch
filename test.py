@@ -3,21 +3,26 @@ from lunchparty import Lunchparty
 import json
 import os
 import random
-token=""
+
+token = ""
 slack_web_client = WebClient(token=token)
 filterList = ["sean.you"]
+
 
 def getDefaultFilterList():
     return ["sean.you"]
 
+
 def initFilterList():
     filterList = getDefaultFilterList()
 
-def sendMessageToChannel(channel :str = "#lunchpartytest"):
+
+def sendMessageToChannel(channel: str = "#lunchpartytest"):
     # 채널 세부정보 -> 더보기 -> 앱추가
     lunchBot = Lunchparty(channel)
     message = lunchBot.getMessagePayload()
-    slack_web_client.api_call(api_method='chat.postMessage', json = message)
+    slack_web_client.api_call(api_method='chat.postMessage', json=message)
+
 
 def getAllChanellList():
     cursor = None
@@ -49,11 +54,12 @@ def getAllChanellList():
         cursor = res.data['response_metadata']['next_cursor']
     print(count)
 
-def getUsersInfoByIds(user_ids = ["U01G3KT8KML"]):
+
+def getUsersInfoByIds(user_ids=["U01G3KT8KML"]):
     ret = []
     for user_id in user_ids:
-        params = {"user":user_id}
-        res = slack_web_client.api_call(api_method='users.info', params = params)
+        params = {"user": user_id}
+        res = slack_web_client.api_call(api_method='users.info', params=params)
         ret.append(res.data)
     return ret
 
@@ -77,32 +83,35 @@ def filterAndExtractName(usersInfoData):
             usersInfoData.pop(n - i - 1)
     return list(map(lambda x: x['user']['name'], usersInfoData))
 
-def getAllMemberOfChannel(channelId = "C0219J2E9GB"):
-    #default lunchpartytest C0219J2E9GB
+
+def getAllMemberOfChannel(channelId="C0219J2E9GB"):
+    # default lunchpartytest C0219J2E9GB
     # 택시개발파트 C0129126URK
     # U01G3KT8KML, U0212JBCWBG
-    #default 100명
-    params = {"token":token, "channel":channelId}
+    # default 100명
+    params = {"token": token, "channel": channelId}
     res = slack_web_client.api_call(api_method="conversations.members",
-                                    params = params)
-    ret = list(map(lambda x : x['members'], res))[0]
+                                    params=params)
+    ret = list(map(lambda x: x['members'], res))[0]
     return ret
     # print(len(res['members']))
     # print(res)
 
-def makeParty(allMembers : list):
-    #리얼 유저만 들어온다고 가정
+
+def makeParty(allMembers: list):
+    # 리얼 유저만 들어온다고 가정
     limit = 4
     n = len(allMembers)
     partyCount = (n + limit - 1) // limit
-    parties = [[]for _ in range(partyCount)]
-    allMembers.sort(key = lambda x : random.randint(1,100))
+    parties = [[] for _ in range(partyCount)]
+    allMembers.sort(key=lambda x: random.randint(1, 100))
     for i, member in enumerate(allMembers):
         parties[i % partyCount].append(member)
     return parties
 
-def sendParty(channel : "lunchpartytest", partyMembers, partyNumber:int):
-    params = {'channel':channel}
+
+def sendParty(channel: "lunchpartytest", partyMembers, partyNumber: int):
+    params = {'channel': channel}
     textBuilder = []
 
     textBuilder.append(partyNumber.__str__())
@@ -115,8 +124,9 @@ def sendParty(channel : "lunchpartytest", partyMembers, partyNumber:int):
 
     slack_web_client.api_call(
         api_method='chat.postMessage',
-        params = params
+        params=params
     )
+
 
 def getConversationHistory(channel):
     params = {'channel': channel}
@@ -127,7 +137,7 @@ def getConversationHistory(channel):
     print(res)
 
 
-def deleteChat(channel : "lunchpartytest", ts : str):
+def deleteChat(channel: "lunchpartytest", ts: str):
     res = slack_web_client.chat_delete(
         channel=channel,
         ts=ts
@@ -135,7 +145,8 @@ def deleteChat(channel : "lunchpartytest", ts : str):
 
     print(res)
 
-def sendJoinParty(channel : "lunchpartytest"):
+
+def sendJoinParty(channel: "lunchpartytest"):
     blocks = [
         {
             "type": "section",
@@ -170,20 +181,23 @@ def sendJoinParty(channel : "lunchpartytest"):
         }
     ]
 
-    params = {'channel':channel, "blocks":blocks}
+    params = {'channel': channel, "blocks": blocks}
 
     slack_web_client.api_call(
         api_method='chat.postMessage',
         params=params
     )
 
-def join(name : str):
+
+def join(name: str):
     if name in filterList:
         filterList.remove(name)
 
-def absent(name : str):
+
+def absent(name: str):
     if name not in filterList:
         filterList.append(name)
+
 
 def getParty():
     return filterList
@@ -191,33 +205,46 @@ def getParty():
 
 def getDummyParty():
     dummyParty = [["sean.you",
-                  "flo.kim",
-                  "hector.kang",
-                  "tony.s"],[
-                  "rocket.m",
-                  "lapin.hong",
-                  "pia.no",
-                  "hubert.bear",
-                  "harry.hoon",
+                   "flo.kim",
+                   "hector.kang",
+                   "tony.s"], [
+                      "rocket.m",
+                      "lapin.hong",
+                      "pia.no",
+                      "hubert.bear",
+                      "harry.hoon",
                   ]]
     return dummyParty
 
+
+def slackAction(name, action):
+    if action == "join":
+        join(name)
+    elif action == "absenct":
+        absent(name)
+    else:
+        print("action not join nor absent")
+
+
 def test():
-    #택시 백엔드 아이디 알려면 얘가 거기 들어가야
-    #택시백엔드 G015Q3N2RQS
-    #lunchpartyprivate C022QR3VCQ0
+    # 택시 백엔드 아이디 알려면 얘가 거기 들어가야
+    # 택시백엔드 G015Q3N2RQS
+    # lunchpartyprivate C022QR3VCQ0
 
-
+    # targetChannelId = "G015Q3N2RQS"
+    # channelName = "택시백엔드"
     targetChannelId = "C022QR3VCQ0"
     channelName = "lunchpartyprivate"
-    # channelMembers = getAllMemberOfChannel(targetChannelId)
-    # infos = getUsersInfoByIds(channelMembers)
-    # filteredInfos = filterAndExtractName(infos)
-    # partyList = makeParty(filteredInfos)
-    partyList = getDummyParty()
+
+    channelMembers = getAllMemberOfChannel(targetChannelId)
+    infos = getUsersInfoByIds(channelMembers)
+    filteredInfos = filterAndExtractName(infos)
+    partyList = makeParty(filteredInfos)
+    # partyList = getDummyParty()
 
     for i, party in enumerate(partyList, 1):
         sendParty(channelName, party, i)
+
 
 # getConversationHistory("lunchpartytest")
 
@@ -225,11 +252,11 @@ if __name__ == '__main__':
     # getConversationHistory("G015Q3N2RQS")
     # deleteChat("C0219J2E9GB",'1621110113.001900')
     # filterList = getDefaultFilterList()
-    # sendJoinParty("lunchpartyprivate")
-    test()
+    sendJoinParty("lunchpartyprivate")
+    # test()
     # getAllChanellList()
 
-#TODO pia.no @ 알림? filter 어떻게 구현할지? 메서지 버튼 + 디비 사용? 인메모리?
+# TODO pia.no @ 알림? filter 어떻게 구현할지? 메서지 버튼 + 디비 사용? 인메모리?
 # 11시 20분쯤 참가 하는 메세지? 12시에 파티 결정 메세지
 # slack app interactivity에 메세지받을 url 넣기
 # post mapping server 구현(그런데 슬랙에서 이걸 볼 수 있어야 댐;;)
